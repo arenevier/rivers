@@ -1,0 +1,53 @@
+<%!
+import datetime
+%>
+
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Fleuves et affluents de France métropolitaine</title>
+
+<style type="text/css">
+ol {
+    list-style-type: disc;
+}
+</style>
+
+<link rel="stylesheet" type="text/css" href="common.css">
+<style type="text/css">
+ol {
+    list-style-type: disc;
+}
+</style>
+
+<script src="jquery.js"></script>
+<script src="listcollapse.js"></script>
+<script>
+$(function() {
+    $("li").listcollapse(true).css("list-style-type", "none");
+});
+</script>
+
+<body>
+    <h1>Liste des fleuves et affluents à la date du ${str(datetime.date.today())}</h1>
+    <%def name="showRiver(river)">
+                <div><a href="${river.osm_id| u}.html">${river.name| h}</a></div>
+        % if river.childs:
+                <ol>
+                    % for tributary in river.childs:
+                        <li>
+                            ${showRiver(tributary)}
+                        </li>
+                    % endfor
+                </ol>
+        % endif
+    </%def>
+    <div id="content">
+        <ol>
+    % for river in roots:
+            <li>
+                ${showRiver(river)}
+            </li>
+    % endfor
+        </ol>
+    </div>
+</body>

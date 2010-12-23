@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src="jquery.js"></script>
+<script src="listcollapse.js"></script>
+<script> $(function() { $("div.info").listcollapse(false); }); </script>
+
+<title>${river.name| h}</title>
+<body>
+    <h1>${river.name| h} (${"%.1f" % (river.length / 1000)} km)</h1>
+    <p><a href="http://www.openstreetmap.org/browse/relation/${int(river.osm_id)| u}">lien OpenStreetmap</a></p>
+    <div class="info"><h2>liste des villes traversée</h2>
+        <ol>
+        % for city in river.cities:
+            <li><a href="http://www.openstreetmap.org/browse/relation/${city[0]| u}">${city[1]| h}</a></li>
+        % endfor
+        </ol>
+    </div>
+    <div class="info"><h2>liste des ponts</h2>
+        <ol>
+        % for bridge in river.bridges:
+            <li><a href="http://www.openstreetmap.org/browse/way/${bridge[0]| u}">${bridge[1]| h}</a></li>
+        % endfor
+        </ol>
+    </div>
+</body>
