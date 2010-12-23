@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Copyright (C) 2010 Arnaud Renevier <arno@renevier.net>
+
 import os, sys, shutil, psycopg2, glob, socket
 from mako.template import Template
 
