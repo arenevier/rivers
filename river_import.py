@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (C) 2010 Arnaud Renevier <arno@renevier.net>
+# WTF Public License
 
 import xml.sax.handler
 import sys, psycopg2, UserDict, os
