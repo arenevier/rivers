@@ -8,6 +8,9 @@
 <body>
     <h1>${river.name| h} (${"%.1f" % (river.length / 1000)} km)</h1>
     <p><a href="http://www.openstreetmap.org/browse/relation/${int(river.osm_id)| u}">lien OpenStreetmap</a></p>
+    % if river.sandre:
+    <p><a href="http://sandre.eaufrance.fr/app/chainage/courdo/htm/${river.sandre| u}.php">lien Sandre</a></p>
+    % endif
     <div class="info"><h2>liste des villes traversée</h2>
         <ol>
         % for city in river.cities:

@@ -69,7 +69,9 @@ class Way(UserDict.UserDict):
         return "Way #%d, %s" % (self['osm_id'], self['name'])
 
 class Relation(UserDict.UserDict):
-    def __init__(self, osm_id, name=None, ways=None, tributaries=None, waterway=None, reltype=None, admin_level=None, boundary=None):
+    def __init__(self, osm_id, name=None, 
+                ways=None, tributaries=None, waterway=None, reltype=None, 
+                admin_level=None, boundary=None, sandre=""):
         self.data = { 'osm_id': int(osm_id)
                     }
 
@@ -79,6 +81,8 @@ class Relation(UserDict.UserDict):
 
         self.admin_level = admin_level
         self.boundary = boundary
+
+        self.sandre = sandre
 
         if ways:
             self.ways = ways
@@ -121,7 +125,7 @@ class Relation(UserDict.UserDict):
 
 class OsmHandler(xml.sax.handler.ContentHandler): 
     usecopy = True
-    tables = [('relations', ['osm_id', 'name', 't'], None),
+    tables = [('relations', ['osm_id', 'name', 't', 'sandre'], None),
               ('tributaries', ['main_id', 'tributary_id'], None),
               ('waysinrel', ['rel_id', 'way_id'], 'waysinrel_relid_seq'),
               ('ways', ['osm_id', 'name', 't'], None),
@@ -216,6 +220,8 @@ class OsmHandler(xml.sax.handler.ContentHandler):
             elif self._currel:
                 if key in ['type', 'waterway', 'admin_level', 'boundary']:
                     setattr(self._currel, key, value)
+                elif key == 'ref:sandre':
+                    self._currel.sandre = value
             elif self._curway:
                 if key in ['bridge', 'ref']:
                     setattr(self._curway, key, value)
@@ -254,9 +260,9 @@ class OsmHandler(xml.sax.handler.ContentHandler):
 
                     if self.usecopy:
                         if self._currel['name']:
-                            self.files['relations'].write("%d|%s|%s\n" % (self._currel['osm_id'], self._currel['name'].encode("utf-8").replace('|', '\|'), reltype))
+                            self.files['relations'].write("%d|%s|%s|%s\n" % (self._currel['osm_id'], self._currel['name'].encode("utf-8").replace('|', '\|'), reltype, self._currel.sandre))
                         else:
-                            self.files['relations'].write("%d||%s\n" % (self._currel['osm_id'], reltype))
+                            self.files['relations'].write("%d||%s|%s\n" % (self._currel['osm_id'], reltype, self._currel.sandre))
 
                         for ref in self._currel.ways:
                             self.files['waysinrel'].write("%d|%d\n" % (int(self._currel), int(ref)))
