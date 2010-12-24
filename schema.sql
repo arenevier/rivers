@@ -3,7 +3,7 @@ DROP TYPE IF EXISTS reltype CASCADE;
 CREATE TYPE reltype AS ENUM ('river', 'boundary');
 
 DROP TABLE IF EXISTS relations CASCADE;
-CREATE TABLE relations (osm_id INTEGER PRIMARY KEY, name VARCHAR NOT NULL, t reltype);
+CREATE TABLE relations (osm_id INTEGER PRIMARY KEY, name VARCHAR NOT NULL, t reltype, sandre VARCHAR DEFAULT NULL);
 SELECT AddGeometryColumn('relations', 'geom', 4326, 'GEOMETRY', 2);
 
 --- tributaries table

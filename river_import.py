@@ -3,7 +3,7 @@
 # Copyright (C) 2010 Arnaud Renevier <arno@renevier.net>
 
 import xml.sax.handler
-import sys, psycopg2, UserDict
+import sys, psycopg2, UserDict, os
 
 class Point(object):
     def __init__(self, lon, lat):
@@ -135,6 +135,10 @@ class OsmHandler(xml.sax.handler.ContentHandler):
 
         if self.usecopy:
             self.files = {}
+            if not os.path.exists("tmp"):
+                os.mkdir("tmp")
+            elif not os.path.isdir("tmp"):
+                raise StandardError, "tmp exists and is not a directory"
             for (table, _, _) in self.tables:
                 self.files[table] = open("tmp/" + table + "_data", "w")
         else:
