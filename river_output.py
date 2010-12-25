@@ -9,7 +9,7 @@ def createRiver(cursor, index, osm_id, name, sandre):
     print "computing river %s" % (name)
     river = River(osm_id, name, sandre)
     index[osm_id] = river
-    sql = "SELECT r.osm_id, r.name, r.sandre FROM relations INNER JOIN tributaries ON relations.osm_id = tributaries.main_id INNER JOIN relations r ON tributaries.tributary_id = r.osm_id WHERE relations.osm_id = %s";
+    sql = "SELECT r.osm_id, r.name, r.sandre FROM relations INNER JOIN tributaries ON relations.osm_id = tributaries.main_id INNER JOIN relations r ON tributaries.tributary_id = r.osm_id WHERE relations.osm_id = %s ORDER BY tributaries.id";
     cursor.execute(sql, (osm_id,))
     for (ch_osm_id, ch_name, ch_sandre) in cursor.fetchall():
         if index.has_key(ch_osm_id):
@@ -17,7 +17,6 @@ def createRiver(cursor, index, osm_id, name, sandre):
             continue
         tributary = createRiver(cursor, index, ch_osm_id, ch_name, ch_sandre)
         river.childs.append(tributary)
-    river.childs.sort(key=lambda r: r.length, reverse=True)
 
     sql = "WITH RECURSIVE t(geom) AS(SELECT (ST_Dump(geom)).geom AS geom FROM relations WHERE osm_id = %s UNION ALL SELECT ST_Union(f.geom, t.geom) FROM (SELECT (st_dump(geom)).geom AS geom FROM relations WHERE osm_id = %s) AS f, t  WHERE ST_StartPoint(f.geom) = ST_EndPoint(t.geom)) SELECT max(ST_Length(ST_LineMerge(geom), TRUE)) FROM t"
     cursor.execute(sql, (osm_id,osm_id))
