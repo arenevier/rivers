@@ -236,7 +236,7 @@ class OsmHandler(xml.sax.handler.ContentHandler):
                 if reltype in ['river', 'boundary']:
                     print (("adding %s") % (self._currel))
 
-                    self.files['relations'].write("%d|%s|%s|%s\n" % (self._currel.osm_id, self._currel.name.encode("utf-8").replace('|', '\|'), reltype, self._currel.sandre))
+                    self.files['relations'].write("%d|%s|%s|%s\n" % (self._currel.osm_id, self._currel.name.encode("utf-8").replace('|', '\|'), reltype, self._currel.sandre.encode("utf-8").replace('|', '\|')))
 
                     for ref in self._currel.ways:
                         self.files['waysinrel'].write("%d|%d\n" % (int(self._currel), int(ref)))
