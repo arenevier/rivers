@@ -5,9 +5,9 @@
 import os, sys, shutil, psycopg2, glob, socket
 from mako.template import Template
 
-def createRiver(cursor, index, osm_id, name, sandre):
+def createRiver(cursor, index, osm_id, name, sandre, parent=None):
     print "computing river %s" % (name)
-    river = River(osm_id, name, sandre)
+    river = River(osm_id, name, sandre=sandre, parent=parent)
     index[osm_id] = river
     sql = "SELECT r.osm_id, r.name, r.sandre FROM relations INNER JOIN tributaries ON relations.osm_id = tributaries.main_id INNER JOIN relations r ON tributaries.tributary_id = r.osm_id WHERE relations.osm_id = %s ORDER BY tributaries.id";
     cursor.execute(sql, (osm_id,))
@@ -15,7 +15,7 @@ def createRiver(cursor, index, osm_id, name, sandre):
         if index.has_key(ch_osm_id):
             sys.stderr.write("trying to insert an already present river: #%s\n" % (ch_osm_id))
             continue
-        tributary = createRiver(cursor, index, ch_osm_id, ch_name, ch_sandre)
+        tributary = createRiver(cursor, index, ch_osm_id, ch_name, ch_sandre, river)
         river.childs.append(tributary)
 
     sql = "WITH RECURSIVE t(geom) AS(SELECT (ST_Dump(geom)).geom AS geom FROM relations WHERE osm_id = %s UNION ALL SELECT ST_Union(f.geom, t.geom) FROM (SELECT (st_dump(geom)).geom AS geom FROM relations WHERE osm_id = %s) AS f, t  WHERE ST_StartPoint(f.geom) = ST_EndPoint(t.geom)) SELECT max(ST_Length(ST_LineMerge(geom), TRUE)) FROM t"
@@ -39,11 +39,12 @@ def createRiver(cursor, index, osm_id, name, sandre):
     return river
 
 class River(object):
-    def __init__(self, osm_id, name, sandre = "", childs=None, cities=None, bridges=None, length=0):
+    def __init__(self, osm_id, name, sandre = "", childs=None, cities=None, bridges=None, length=0, parent=None):
         self.osm_id = osm_id
         self.name = unicode(name, 'utf-8')
         self.length = length
-        self.sandre = sandre;
+        self.sandre = sandre
+        self.parent = parent
         if childs:
             self.childs = childs
         else:

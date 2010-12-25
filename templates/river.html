@@ -2,7 +2,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <script src="jquery.js"></script>
 <script src="listcollapse.js"></script>
-<script> $(function() { $("div.info").listcollapse(false); }); </script>
+<script> $(function() { $("div.list").listcollapse(false); }); </script>
 
 <title>${river.name| h}</title>
 <body>
@@ -11,18 +11,33 @@
     % if river.sandre:
     <p><a href="http://sandre.eaufrance.fr/app/chainage/courdo/htm/${river.sandre| u}.php">lien Sandre</a></p>
     % endif
-    <div class="info"><h2>liste des villes traversée</h2>
+    <div class="list"><h2>liste des villes traversée</h2>
         <ol>
         % for city in river.cities:
             <li><a href="http://www.openstreetmap.org/browse/relation/${city[0]| u}">${city[1]| h}</a></li>
         % endfor
         </ol>
     </div>
-    <div class="info"><h2>liste des ponts</h2>
+    <div class="list"><h2>liste des ponts</h2>
         <ol>
         % for bridge in river.bridges:
             <li><a href="http://www.openstreetmap.org/browse/way/${bridge[0]| u}">${bridge[1]| h}</a></li>
         % endfor
         </ol>
     </div>
+
+    % if river.parent:
+        <div><h2>Versant</h2>
+            <p><a href="${int(river.parent.osm_id)| u}.html">${river.parent.name| h}</a></p>
+        </div>
+    % endif
+    % if river.childs:
+    <div class="list"><h2>liste des affluents</h2>
+        <ol>
+        % for child in river.childs:
+            <li><a href="${int(child.osm_id)| u}.html">${child.name| h}</a></li>
+        % endfor
+        </ol>
+    </div>
+    % endif
 </body>
