@@ -29,7 +29,7 @@ class Node(object):
         return ("Node #%d: <%f, %f>" % (self.osm_id, self.geom.lon, self.geom.lat))
 
 class Way(object):
-    def __init__(self, osm_id, name=None, nodes=None, bridge=None, ref=None):
+    def __init__(self, osm_id, name=None, nodes=None, bridge=None, ref=None, name_fr=None):
         self.osm_id = int(osm_id);
         if nodes:
             self.nodes = nodes
@@ -39,6 +39,7 @@ class Way(object):
         self._name = name
         self.bridge = bridge
         self.ref = ref
+        self.name_fr = name_fr
 
     def __getattr__(self, key):
         if key == "type":
@@ -47,10 +48,13 @@ class Way(object):
             else:
                 return None
         elif key == "name":
-            if self._name:
-                return self._name
-            if self.ref:
-                return self.ref
+            for prop in ['name_fr', '_name', 'ref']:
+                try:
+                    val = getattr(self, prop)
+                    if val:
+                        return val
+                except AttributeError:
+                    pass
             else:
                 return "#" + str(self.osm_id)
 
@@ -69,17 +73,19 @@ class Way(object):
 class Relation(object):
     def __init__(self, osm_id, name="", 
                 ways=None, tributaries=None, waterway=None, reltype=None, 
-                admin_level=None, boundary=None, sandre=""):
+                admin_level=None, boundary=None, ref_sandre="", name_fr=None):
         self.osm_id = int(osm_id)
 
         self._name = name
+        self.name_fr = name_fr
+
         self.waterway = waterway
         self._type = reltype
 
         self.admin_level = admin_level
         self.boundary = boundary
 
-        self.sandre = sandre
+        self.ref_sandre = ref_sandre
 
         if ways:
             self.ways = ways
@@ -99,8 +105,13 @@ class Relation(object):
             else:
                 return None
         elif key == "name":
-            if self._name:
-                return self._name
+            for prop in ['name_fr', '_name']:
+                try:
+                    val = getattr(self, prop)
+                    if val:
+                        return val
+                except AttributeError:
+                    pass
             else:
                 return "#" + str(self.osm_id)
 
@@ -203,25 +214,23 @@ class OsmHandler(xml.sax.handler.ContentHandler):
                 elif self._currel:
                     self._currel.name = value
             elif self._currel:
-                if key in ['type', 'waterway', 'admin_level', 'boundary']:
-                    setattr(self._currel, key, value)
-                elif key == 'ref:sandre':
-                    self._currel.sandre = value
+                if key in ['type', 'waterway', 'admin_level', 'boundary', 'ref:sandre', 'name:fr']:
+                    setattr(self._currel, key.replace(':', '_'), value)
             elif self._curway:
-                if key in ['bridge', 'ref']:
-                    setattr(self._curway, key, value)
+                if key in ['bridge', 'ref', 'name:fr']:
+                    setattr(self._curway, key.replace(':', '_'), value)
 
     def endElement(self, name):
         if name == "node":
             if self._curnode:
-                print (("adding %s") % (self._curnode))
+                #print (("adding %s") % (self._curnode))
                 self.files['nodes'].write("%d|SRID=4326;POINT(%f %f)\n" % (self._curnode.osm_id, self._curnode.geom.lon, self._curnode.geom.lat))
             self.resetstate()
 
         elif name == "way":
             if self._curway:
                 waytype = self._curway.type or ''
-                print (("adding %s") % (self._curway))
+                #print (("adding %s") % (self._curway))
 
                 self.files['ways'].write("%d|%s|%s\n" % (self._curway.osm_id, self._curway.name.encode("utf-8").replace('|', '\|'), waytype))
                 for ref in self._curway.nodes:
@@ -234,9 +243,9 @@ class OsmHandler(xml.sax.handler.ContentHandler):
                 reltype = self._currel.type
 
                 if reltype in ['river', 'boundary']:
-                    print (("adding %s") % (self._currel))
+                    #print (("adding %s") % (self._currel))
 
-                    self.files['relations'].write("%d|%s|%s|%s\n" % (self._currel.osm_id, self._currel.name.encode("utf-8").replace('|', '\|'), reltype, self._currel.sandre.encode("utf-8").replace('|', '\|')))
+                    self.files['relations'].write("%d|%s|%s|%s\n" % (self._currel.osm_id, self._currel.name.encode("utf-8").replace('|', '\|'), reltype, self._currel.ref_sandre.encode("utf-8").replace('|', '\|')))
 
                     for ref in self._currel.ways:
                         self.files['waysinrel'].write("%d|%d\n" % (int(self._currel), int(ref)))
