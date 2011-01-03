@@ -230,7 +230,7 @@ class OsmHandler(xml.sax.handler.ContentHandler):
                         self._currel.discarded.append(ref)
 
         elif name == "tag":
-            key = attrs.get('k')
+            key = attrs.get('k').lower()
             value = attrs.get('v')
             if key == "name":
                 if self._curway:
