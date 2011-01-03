@@ -5,6 +5,7 @@
 
 import xml.sax.handler
 import sys, psycopg2, os
+import tempfile, shutil
 
 class Point(object):
     def __init__(self, lon, lat):
@@ -72,7 +73,7 @@ class Way(object):
 
 class Relation(object):
     def __init__(self, osm_id, name="", 
-                ways=None, tributaries=None, waterway=None, reltype=None, 
+                ways=None, tributaries=None, discarded=False, waterway=None, reltype=None, 
                 admin_level=None, boundary=None, ref_sandre="", name_fr=None):
         self.osm_id = int(osm_id)
 
@@ -95,6 +96,10 @@ class Relation(object):
             self.tributaries = tributaries
         else:
             self.tributaries = []
+        if discarded:
+            self.discarded = discarded
+        else:
+            self.discarded = []
 
     def __getattr__(self, key):
         if key == "type":
@@ -152,11 +157,27 @@ class OsmHandler(xml.sax.handler.ContentHandler):
             raise StandardError, "tmp exists and is not a directory"
         for (table, _, _) in self.tables:
             self.files[table] = open("tmp/" + table + "_data", "w")
+            self.files['discarded_rels'] = open("tmp/discarded_rels", "w")
 
     def endDocument(self):
+        discarded_rels = []
+        for f in self.files.itervalues():
+            f.close()
+
+        # discard discarded_rels
+        with open ("tmp/discarded_rels") as f:
+            discarded_rels = [int(line) for line in f.readlines()]
+        g = tempfile.NamedTemporaryFile(delete=False)
+        with open ("tmp/relations_data") as f:
+            for line in f.readlines():
+                osm_id = int(line.split('|')[0])
+                if not osm_id in discarded_rels:
+                    g.write(line)
+        g.close()
+        shutil.move(g.name, "tmp/relations_data")
+
         for (table, columns, index) in self.tables:
             print "copying table %s" % (table)
-            self.files[table].close()
             fd = open("tmp/" + table + "_data", "r")
             self.cursor.copy_from(fd, table, sep="|", columns=columns, null='')
             fd.close()
@@ -202,8 +223,11 @@ class OsmHandler(xml.sax.handler.ContentHandler):
             if self._currel is not None:
                 if attrs.get('type') == 'way':
                     self._currel.ways.append(ref)
-                elif attrs.get('type') == 'relation' and attrs.get('role') == 'tributary':
-                    self._currel.tributaries.append(ref)
+                elif attrs.get('type') == 'relation':
+                    if attrs.get('role') == 'tributary':
+                        self._currel.tributaries.append(ref)
+                    elif attrs.get('role') == 'side_stream':
+                        self._currel.discarded.append(ref)
 
         elif name == "tag":
             key = attrs.get('k')
@@ -251,6 +275,8 @@ class OsmHandler(xml.sax.handler.ContentHandler):
                         self.files['waysinrel'].write("%d|%d\n" % (int(self._currel), int(ref)))
                     for trib in self._currel.tributaries:
                         self.files['tributaries'].write("%d|%d\n" % (int(self._currel), int(trib)))
+                    for disc in self._currel.discarded:
+                        self.files['discarded_rels'].write("%d\n" % (int(disc)))
 
             self.resetstate()
 
