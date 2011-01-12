@@ -2,7 +2,7 @@
 
 # Copyright (C) 2010 Arnaud Renevier <arno@renevier.net>
 
-import os, sys, shutil, psycopg2, glob, socket
+import os, sys, shutil, psycopg2, glob
 from mako.template import Template
 
 def createRiver(cursor, index, osm_id, name, sandre, parent=None):
@@ -93,7 +93,6 @@ if __name__ == '__main__':
         print "generating main index"
         fd.write(indextemplate.render(roots=roots))
 
-    cursor.execute("SELECT osm_id FROM relations WHERE t='river'")
     for river in roots:
         outputriver(river)
 
