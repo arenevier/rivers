@@ -20,10 +20,10 @@ ol {
 </style>
 
 <script src="jquery.js"></script>
-<script src="listcollapse.js"></script>
+<script src="collapser.js"></script>
 <script>
 $(function() {
-    $("li").listcollapse(true).css("list-style-type", "none");
+    $("li").collapser({selector: "ol"}).css("list-style-type", "none");
 });
 </script>
 
